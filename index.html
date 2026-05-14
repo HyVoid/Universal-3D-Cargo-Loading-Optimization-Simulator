@@ -326,6 +326,13 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
+        // 添加缺失的渲染循环函数
+        function animate() {
+            requestAnimationFrame(animate);
+            if (controls) controls.update(); // 更新鼠标交互控制器
+            if (renderer && scene && camera) renderer.render(scene, camera); // 渲染3D场景
+        }
+
         window.onload = initScene;
     </script>
 </body>
