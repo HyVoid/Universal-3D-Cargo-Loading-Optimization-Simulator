@@ -29,7 +29,7 @@ Read this in other languages: [简体中文](#-简体中文) | [English](#-engli
 
 **第一步 — 打开文件**
 
-下载并使用 Chrome、Edge 或 Safari 打开 `cargo_simulator.html` 文件。
+点击这里打开模拟器(https://hyvoid.github.io/Universal-3D-Cargo-Loading-Optimization-Simulator/)
 
 **第二步 — 输入参数**
 
@@ -97,7 +97,7 @@ Powered by Three.js, maintains high frame rates even with **tens of thousands of
 
 **Step 1 — Open File**
 
-Download and open `cargo_simulator.html` in Chrome, Edge, or Safari.
+Click here and visit the simulator(https://hyvoid.github.io/Universal-3D-Cargo-Loading-Optimization-Simulator/)
 
 **Step 2 — Input Parameters**
 
