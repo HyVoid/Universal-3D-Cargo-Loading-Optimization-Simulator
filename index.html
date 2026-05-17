@@ -21,74 +21,142 @@
             max-height: 95vh;
             overflow-y: auto;
         }
-        /* 定制滚动条 */
         .ui-panel::-webkit-scrollbar { width: 6px; }
         .ui-panel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+        /* 语言切换器 */
+        #lang-switcher {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.25rem;
+            background: rgba(255,255,255,0.95);
+            padding: 0.35rem 0.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+        }
+        .lang-btn {
+            padding: 0.25rem 0.6rem;
+            border-radius: 0.3rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            color: #6b7280;
+            background: transparent;
+            transition: all 0.15s ease;
+            letter-spacing: 0.02em;
+        }
+        .lang-btn:hover {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+        .lang-btn.active {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+        }
+
+        /* 阿拉伯语面板专用方向 */
+        .panel-rtl {
+            direction: rtl;
+            text-align: right;
+        }
+        .panel-rtl input {
+            text-align: right;
+        }
     </style>
 </head>
 <body>
+    <!-- 语言切换器（右上角） -->
+    <div id="lang-switcher">
+        <button class="lang-btn active" onclick="setLang('zh')" id="btn-zh">中文</button>
+        <button class="lang-btn" onclick="setLang('en')" id="btn-en">EN</button>
+        <button class="lang-btn" onclick="setLang('ar')" id="btn-ar">عربي</button>
+    </div>
+
     <!-- 左侧控制面板 -->
-    <div class="ui-panel top-4 left-4 w-80">
-        <h1 class="text-xl font-bold text-gray-800 mb-1">3D装载优化模拟器</h1>
-        <p class="text-xs text-gray-500 mb-4">基于宽度零间隙防晃动算法</p>
+    <div class="ui-panel top-4 left-4 w-80" id="main-panel">
+        <h1 class="text-xl font-bold text-gray-800 mb-1" data-i18n="title">3D装载优化模拟器</h1>
+        <p class="text-xs text-gray-500 mb-4" data-i18n="subtitle">基于宽度零间隙防晃动算法</p>
         
-        <!-- 参数输入区 -->
         <div class="space-y-4">
             <!-- 货柜参数 -->
             <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                <h2 class="text-sm font-semibold text-gray-700 mb-2">🚚 货柜内径尺寸 (cm)</h2>
+                <h2 class="text-sm font-semibold text-gray-700 mb-2" data-i18n="containerTitle">🚚 货柜内径尺寸 (cm)</h2>
                 <div class="grid grid-cols-3 gap-2 text-sm">
-                    <div><label class="block text-xs text-gray-500">长度 (L)</label><input type="number" id="c_l" value="1730" class="w-full border rounded px-1 py-1"></div>
-                    <div><label class="block text-xs text-gray-500">宽度 (W)</label><input type="number" id="c_w" value="280" class="w-full border rounded px-1 py-1"></div>
-                    <div><label class="block text-xs text-gray-500">高度 (H)</label><input type="number" id="c_h" value="275" class="w-full border rounded px-1 py-1"></div>
+                    <div>
+                        <label class="block text-xs text-gray-500" data-i18n="labelL">长度 (L)</label>
+                        <input type="number" id="c_l" value="1730" class="w-full border rounded px-1 py-1">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500" data-i18n="labelW">宽度 (W)</label>
+                        <input type="number" id="c_w" value="280" class="w-full border rounded px-1 py-1">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500" data-i18n="labelH">高度 (H)</label>
+                        <input type="number" id="c_h" value="275" class="w-full border rounded px-1 py-1">
+                    </div>
                 </div>
             </div>
 
             <!-- 货物参数 -->
             <div class="bg-blue-50 p-3 rounded border border-blue-100">
-                <h2 class="text-sm font-semibold text-blue-800 mb-2">📦 单一产品尺寸 (cm)</h2>
-                <p class="text-xs text-blue-600 mb-2">规则: 高度方向固定朝上，长宽可平移互换以自适应货柜宽度。</p>
+                <h2 class="text-sm font-semibold text-blue-800 mb-2" data-i18n="boxTitle">📦 单一产品尺寸 (cm)</h2>
+                <p class="text-xs text-blue-600 mb-2" data-i18n="boxRule">规则: 高度方向固定朝上，长宽可平移互换以自适应货柜宽度。</p>
                 <div class="grid grid-cols-3 gap-2 text-sm">
-                    <div><label class="block text-xs text-gray-500">长度 (L)</label><input type="number" id="b_l" value="47.5" class="w-full border rounded px-1 py-1"></div>
-                    <div><label class="block text-xs text-gray-500">宽度 (W)</label><input type="number" id="b_w" value="22.5" class="w-full border rounded px-1 py-1"></div>
-                    <div><label class="block text-xs text-blue-500 font-bold">固定高(H)</label><input type="number" id="b_h" value="34.0" class="w-full border rounded px-1 py-1 bg-white"></div>
+                    <div>
+                        <label class="block text-xs text-gray-500" data-i18n="labelL">长度 (L)</label>
+                        <input type="number" id="b_l" value="47.5" class="w-full border rounded px-1 py-1">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500" data-i18n="labelW">宽度 (W)</label>
+                        <input type="number" id="b_w" value="22.5" class="w-full border rounded px-1 py-1">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-blue-500 font-bold" data-i18n="fixedH">固定高(H)</label>
+                        <input type="number" id="b_h" value="34.0" class="w-full border rounded px-1 py-1 bg-white">
+                    </div>
                 </div>
             </div>
 
             <!-- 目标数量 -->
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">🎯 目标装箱总数</label>
-                <input type="number" id="target_count" value="2751" placeholder="留空则计算物理最大容量" class="w-full border rounded px-2 py-1.5 text-sm">
-                <p class="text-xs text-gray-400 mt-1">设为空或0将自动排满整个货柜。</p>
+                <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="targetLabel">🎯 目标装箱总数</label>
+                <input type="number" id="target_count" value="2751" data-i18n-placeholder="targetPlaceholder" placeholder="留空则计算物理最大容量" class="w-full border rounded px-2 py-1.5 text-sm">
+                <p class="text-xs text-gray-400 mt-1" data-i18n="targetHint">设为空或0将自动排满整个货柜。</p>
             </div>
 
-            <button onclick="runSimulation()" class="w-full bg-blue-600 text-white font-bold text-sm py-2.5 rounded hover:bg-blue-700 transition shadow-md">
+            <button onclick="runSimulation()" class="w-full bg-blue-600 text-white font-bold text-sm py-2.5 rounded hover:bg-blue-700 transition shadow-md" data-i18n="btnRun">
                 生成最优 3D 方案
             </button>
         </div>
 
-        <!-- 计算结果展示区 -->
+        <!-- 计算结果 -->
         <div id="results-panel" class="mt-5 border-t border-gray-200 pt-4 hidden">
-            <h3 class="text-sm font-bold text-gray-800 mb-2">📊 排布计算结果</h3>
+            <h3 class="text-sm font-bold text-gray-800 mb-2" data-i18n="resultsTitle">📊 排布计算结果</h3>
             <div class="space-y-2 text-sm">
                 <div class="flex justify-between border-b pb-1">
-                    <span class="text-gray-600">实际装载数量:</span>
-                    <span id="res_count" class="font-bold text-blue-600">0 箱</span>
+                    <span class="text-gray-600" data-i18n="resCountLabel">实际装载数量:</span>
+                    <span id="res_count" class="font-bold text-blue-600">0</span>
                 </div>
                 <div class="flex justify-between border-b pb-1">
-                    <span class="text-gray-600">理论最大容量:</span>
-                    <span id="res_max" class="font-bold text-gray-800">0 箱</span>
+                    <span class="text-gray-600" data-i18n="resMaxLabel">理论最大容量:</span>
+                    <span id="res_max" class="font-bold text-gray-800">0</span>
                 </div>
                 <div class="flex justify-between border-b pb-1">
-                    <span class="text-gray-600">货柜宽度间隙:</span>
+                    <span class="text-gray-600" data-i18n="resGapLabel">货柜宽度间隙:</span>
                     <span id="res_gap" class="font-bold text-green-600">0 cm</span>
                 </div>
                 <div class="flex justify-between border-b pb-1">
-                    <span class="text-gray-600">占用总长度:</span>
+                    <span class="text-gray-600" data-i18n="resLenLabel">占用总长度:</span>
                     <span id="res_len" class="font-bold text-gray-800">0 cm</span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-gray-600">尾部距门剩余:</span>
+                    <span class="text-gray-600" data-i18n="resLeftLabel">尾部距门剩余:</span>
                     <span id="res_left" class="font-bold text-red-500">0 cm</span>
                 </div>
             </div>
@@ -96,48 +164,224 @@
             <!-- 图例 -->
             <div class="mt-3 bg-gray-100 p-2 rounded text-xs space-y-1">
                 <div class="flex items-center gap-2">
-                    <span class="inline-block w-3 h-3 bg-[#4A90E2] border border-gray-400"></span>
-                    <span id="legend_A">A区: 宽自适应 / 长自适应</span>
+                    <span class="inline-block w-3 h-3 bg-[#4A90E2] border border-gray-400 flex-shrink-0"></span>
+                    <span id="legend_A">A区: 宽22.5 / 延47.5 (0列)</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="inline-block w-3 h-3 bg-[#5DADE2] border border-gray-400"></span>
-                    <span id="legend_B">B区: 宽自适应 / 长自适应</span>
+                    <span class="inline-block w-3 h-3 bg-[#5DADE2] border border-gray-400 flex-shrink-0"></span>
+                    <span id="legend_B">B区: 宽47.5 / 延22.5 (0列)</span>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- 底部操作提示 -->
-    <div class="absolute bottom-4 left-4 bg-white/80 px-3 py-1.5 rounded text-xs text-gray-600 backdrop-blur pointer-events-none">
+    <div class="absolute bottom-4 left-4 bg-white/80 px-3 py-1.5 rounded text-xs text-gray-600 backdrop-blur pointer-events-none" id="camera-hint" data-i18n="cameraHint">
         左键旋转 | 右键平移 | 滚轮缩放
     </div>
 
     <div id="canvas-container"></div>
 
     <script>
-        let scene, camera, renderer, controls;
-        let cargoGroup = new THREE.Group(); // 用于管理所有货物网格
+        // ─────────────────────────────────────────────
+        // 多语言翻译表
+        // ─────────────────────────────────────────────
+        const TRANSLATIONS = {
+            zh: {
+                title:           "3D装载优化模拟器",
+                subtitle:        "基于宽度零间隙防晃动算法",
+                containerTitle:  "🚚 货柜内径尺寸 (cm)",
+                labelL:          "长度 (L)",
+                labelW:          "宽度 (W)",
+                labelH:          "高度 (H)",
+                boxTitle:        "📦 单一产品尺寸 (cm)",
+                boxRule:         "规则: 高度方向固定朝上，长宽可平移互换以自适应货柜宽度。",
+                fixedH:          "固定高(H)",
+                targetLabel:     "🎯 目标装箱总数",
+                targetPlaceholder: "留空则计算物理最大容量",
+                targetHint:      "设为空或0将自动排满整个货柜。",
+                btnRun:          "生成最优 3D 方案",
+                resultsTitle:    "📊 排布计算结果",
+                resCountLabel:   "实际装载数量:",
+                resMaxLabel:     "理论最大容量:",
+                resGapLabel:     "货柜宽度间隙:",
+                resLenLabel:     "占用总长度:",
+                resLeftLabel:    "尾部距门剩余:",
+                unitBox:         "箱",
+                unitCm:          "cm",
+                perfectGap:      "(完美防晃)",
+                hasGap:          "(有缝隙)",
+                legendA:         "A区: 宽{bW} / 延{bL} ({n}列)",
+                legendB:         "B区: 宽{bL} / 延{bW} ({n}列)",
+                cameraHint:      "左键旋转 | 右键平移 | 滚轮缩放",
+                htmlLang:        "zh-CN",
+                dir:             "ltr",
+            },
+            en: {
+                title:           "3D Load Optimization Simulator",
+                subtitle:        "Zero-Gap Anti-Shake Width Algorithm",
+                containerTitle:  "🚚 Container Inner Dimensions (cm)",
+                labelL:          "Length (L)",
+                labelW:          "Width (W)",
+                labelH:          "Height (H)",
+                boxTitle:        "📦 Single Product Dimensions (cm)",
+                boxRule:         "Rule: Height is fixed upright. Length/Width may swap to fit container width.",
+                fixedH:          "Fixed H",
+                targetLabel:     "🎯 Target Box Count",
+                targetPlaceholder: "Leave blank for max physical capacity",
+                targetHint:      "Set to 0 or blank to fill the entire container.",
+                btnRun:          "Generate Optimal 3D Layout",
+                resultsTitle:    "📊 Layout Calculation Results",
+                resCountLabel:   "Actual Load Count:",
+                resMaxLabel:     "Theoretical Max:",
+                resGapLabel:     "Container Width Gap:",
+                resLenLabel:     "Total Length Used:",
+                resLeftLabel:    "Remaining (rear to door):",
+                unitBox:         "boxes",
+                unitCm:          "cm",
+                perfectGap:      "(Perfect, zero-gap)",
+                hasGap:          "(Gap exists)",
+                legendA:         "Zone A: W{bW} / D{bL} ({n} cols)",
+                legendB:         "Zone B: W{bL} / D{bW} ({n} cols)",
+                cameraHint:      "Left-drag: Rotate | Right-drag: Pan | Scroll: Zoom",
+                htmlLang:        "en",
+                dir:             "ltr",
+            },
+            ar: {
+                title:           "محاكي التحميل ثلاثي الأبعاد",
+                subtitle:        "خوارزمية الملء الصفري لمنع الاهتزاز",
+                containerTitle:  "🚚 الأبعاد الداخلية للحاوية (سم)",
+                labelL:          "الطول (L)",
+                labelW:          "العرض (W)",
+                labelH:          "الارتفاع (H)",
+                boxTitle:        "📦 أبعاد المنتج الواحد (سم)",
+                boxRule:         "القاعدة: الارتفاع ثابت للأعلى. يمكن تبديل الطول/العرض لملاءمة عرض الحاوية.",
+                fixedH:          "ارتفاع ثابت",
+                targetLabel:     "🎯 العدد المستهدف من الصناديق",
+                targetPlaceholder: "اتركه فارغاً للحد الأقصى",
+                targetHint:      "اضبطه على 0 أو اتركه فارغاً لملء الحاوية بالكامل.",
+                btnRun:          "توليد المخطط الثلاثي الأمثل",
+                resultsTitle:    "📊 نتائج حساب الترتيب",
+                resCountLabel:   "العدد الفعلي المحمَّل:",
+                resMaxLabel:     "الحد الأقصى النظري:",
+                resGapLabel:     "فجوة عرض الحاوية:",
+                resLenLabel:     "إجمالي الطول المستخدم:",
+                resLeftLabel:    "المتبقي (من المؤخرة إلى الباب):",
+                unitBox:         "صندوق",
+                unitCm:          "سم",
+                perfectGap:      "(مثالي، بدون فجوة)",
+                hasGap:          "(توجد فجوة)",
+                legendA:         "المنطقة أ: ع{bW} / ع{bL} ({n} أعمدة)",
+                legendB:         "المنطقة ب: ع{bL} / ع{bW} ({n} أعمدة)",
+                cameraHint:      "يسار: دوران | يمين: تحريك | عجلة: تكبير",
+                htmlLang:        "ar",
+                dir:             "rtl",
+            }
+        };
 
-        // 初始化 Three.js 场景
+        let currentLang = 'zh';
+
+        // 获取当前语言的翻译文本
+        function t(key) {
+            return TRANSLATIONS[currentLang][key] || TRANSLATIONS['zh'][key] || key;
+        }
+
+        // 切换语言并更新所有静态文本
+        function setLang(lang) {
+            if (!TRANSLATIONS[lang]) return;
+            currentLang = lang;
+            const tr = TRANSLATIONS[lang];
+
+            // 更新 html lang 属性
+            document.documentElement.lang = tr.htmlLang;
+
+            // 更新激活按钮状态
+            ['zh','en','ar'].forEach(l => {
+                document.getElementById('btn-' + l).classList.toggle('active', l === lang);
+            });
+
+            // 面板 RTL/LTR
+            const panel = document.getElementById('main-panel');
+            if (tr.dir === 'rtl') {
+                panel.classList.add('panel-rtl');
+            } else {
+                panel.classList.remove('panel-rtl');
+            }
+
+            // 替换所有带 data-i18n 标签的文本
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (tr[key] !== undefined) el.textContent = tr[key];
+            });
+
+            // 替换 placeholder
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (tr[key] !== undefined) el.placeholder = tr[key];
+            });
+
+            // 如果结果面板已显示，重新刷新动态结果文字
+            if (!document.getElementById('results-panel').classList.contains('hidden')) {
+                refreshResultsText();
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        // 保存上次计算结果，供语言切换时刷新用
+        // ─────────────────────────────────────────────
+        let lastResult = null;
+
+        function refreshResultsText() {
+            if (!lastResult) return;
+            const { finalCount, maxCapacity, bestGap, maxUsedX, cL, bL, bW, bestCountW, bestCountL } = lastResult;
+            const tr = TRANSLATIONS[currentLang];
+
+            document.getElementById('res_count').innerText = finalCount + ' ' + tr.unitBox;
+            document.getElementById('res_max').innerText   = maxCapacity + ' ' + tr.unitBox;
+
+            const gapSuffix = bestGap === 0 ? tr.perfectGap : tr.hasGap;
+            document.getElementById('res_gap').innerText  = bestGap.toFixed(1) + ' ' + tr.unitCm + ' ' + gapSuffix;
+            document.getElementById('res_len').innerText  = maxUsedX.toFixed(1) + ' ' + tr.unitCm;
+
+            const leftLen = cL - maxUsedX;
+            const leftEl = document.getElementById('res_left');
+            leftEl.innerText = leftLen.toFixed(1) + ' ' + tr.unitCm;
+            leftEl.className = leftLen < bL && leftLen < bW
+                ? "font-bold text-red-500"
+                : "font-bold text-green-600";
+
+            // 图例
+            const fmtA = tr.legendA
+                .replace('{bW}', bW).replace('{bL}', bL).replace('{n}', bestCountW);
+            const fmtB = tr.legendB
+                .replace('{bL}', bL).replace('{bW}', bW).replace('{n}', bestCountL);
+            document.getElementById('legend_A').innerText = fmtA;
+            document.getElementById('legend_B').innerText = fmtB;
+        }
+
+        // ─────────────────────────────────────────────
+        // Three.js 场景
+        // ─────────────────────────────────────────────
+        let scene, camera, renderer, controls;
+        let cargoGroup = new THREE.Group();
+
         function initScene() {
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xe5e7eb); // Tailwind gray-200
+            scene.background = new THREE.Color(0xe5e7eb);
 
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 20000);
-            
+
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.outputEncoding = THREE.sRGBEncoding; 
+            renderer.outputEncoding = THREE.sRGBEncoding;
             container.appendChild(renderer.domElement);
 
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
             scene.add(ambientLight);
-
             const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.4);
             dirLight1.position.set(3000, 2000, 1500);
             scene.add(dirLight1);
-
             const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
             dirLight2.position.set(-1000, 1000, -1000);
             scene.add(dirLight2);
@@ -146,173 +390,117 @@
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
 
-            scene.add(cargoGroup); // 添加货物组
+            scene.add(cargoGroup);
 
             window.addEventListener('resize', onWindowResize, false);
             animate();
-            
-            // 初次加载自动运行一次
             runSimulation();
         }
 
-        // 核心算法：计算最优组合并生成槽位
+        // ─────────────────────────────────────────────
+        // 核心算法
+        // ─────────────────────────────────────────────
         function runSimulation() {
-            // 1. 读取参数
             const cL = parseFloat(document.getElementById('c_l').value);
             const cW = parseFloat(document.getElementById('c_w').value);
             const cH = parseFloat(document.getElementById('c_h').value);
-
             const bL = parseFloat(document.getElementById('b_l').value);
             const bW = parseFloat(document.getElementById('b_w').value);
             const bH = parseFloat(document.getElementById('b_h').value);
-
             let rawCount = parseInt(document.getElementById('target_count').value);
             const targetCount = (isNaN(rawCount) || rawCount <= 0) ? Infinity : rawCount;
 
-            // 清理旧场景
-            while(cargoGroup.children.length > 0){ 
-                cargoGroup.remove(cargoGroup.children[0]); 
+            while(cargoGroup.children.length > 0) {
+                cargoGroup.remove(cargoGroup.children[0]);
             }
 
-            // 绘制货柜轮廓
             drawContainerBase(cL, cW, cH);
 
-            // 2. 宽度零间隙算法 (寻找长宽最优组合填充货柜宽度)
+            // 宽度零间隙算法
             let bestGap = cW;
-            let bestCountW = 0; // 使用单品宽度 (bW) 作为横向的列数
-            let bestCountL = 0; // 使用单品长度 (bL) 作为横向的列数
-
-            // 遍历所有可能的排布组合
+            let bestCountW = 0;
+            let bestCountL = 0;
             for (let i = 0; i <= Math.floor(cW / bW); i++) {
                 let j = Math.floor((cW - i * bW) / bL);
                 let currentGap = cW - (i * bW + j * bL);
-                
                 if (currentGap < bestGap) {
                     bestGap = currentGap;
                     bestCountW = i;
                     bestCountL = j;
                 }
-                if (currentGap === 0) break; // 找到完美 0 间隙
+                if (currentGap === 0) break;
             }
 
-            // 3. 生成所有合法的物理槽位 (Slots)
             let slots = [];
             const maxLayers = Math.floor(cH / bH);
-            
-            // A区逻辑: 横向使用 bW，纵向延伸使用 bL
+
             const maxDepthA = Math.floor(cL / bL);
             for(let layer = 0; layer < maxLayers; layer++) {
                 for(let depth = 0; depth < maxDepthA; depth++) {
                     for(let col = 0; col < bestCountW; col++) {
-                        slots.push({
-                            x: depth * bL,           // 深度坐标
-                            y: col * bW,             // 宽度坐标
-                            z: layer * bH,           // 高度坐标
-                            dx: bL, dy: bW, dz: bH,  // 该姿态下的长宽高质量
-                            type: 'A'
-                        });
+                        slots.push({ x: depth*bL, y: col*bW, z: layer*bH, dx: bL, dy: bW, dz: bH, type: 'A' });
                     }
                 }
             }
 
-            // B区逻辑: 横向使用 bL，纵向延伸使用 bW
             const maxDepthB = Math.floor(cL / bW);
-            const widthOffsetB = bestCountW * bW; // B区在宽度上的起点
-            
+            const widthOffsetB = bestCountW * bW;
             for(let layer = 0; layer < maxLayers; layer++) {
                 for(let depth = 0; depth < maxDepthB; depth++) {
                     for(let col = 0; col < bestCountL; col++) {
-                        slots.push({
-                            x: depth * bW,
-                            y: widthOffsetB + col * bL,
-                            z: layer * bH,
-                            dx: bW, dy: bL, dz: bH,
-                            type: 'B'
-                        });
+                        slots.push({ x: depth*bW, y: widthOffsetB+col*bL, z: layer*bH, dx: bW, dy: bL, dz: bH, type: 'B' });
                     }
                 }
             }
 
-            // 4. 排序算法：保证 "底层优先铺满，深处优先铺满"
             slots.sort((a, b) => {
-                // 优先按 Z 轴(高度)排序，实现层层叠加
                 if (Math.abs(a.z - b.z) > 0.01) return a.z - b.z;
-                // 同层内，优先按 X 轴(深度)排序，从车厢最深处排向车门
                 if (Math.abs(a.x - b.x) > 0.01) return a.x - b.x;
-                // 同深度，按 Y 轴排列
                 return a.y - b.y;
             });
 
-            // 5. 截取目标数量
             const maxCapacity = slots.length;
             const finalCount = Math.min(targetCount, maxCapacity);
             const finalSlots = slots.slice(0, finalCount);
 
-            // 6. 三维渲染优化 (共享材质和几何体以提升性能)
-            const geoA = new THREE.BoxGeometry(bL - 0.2, bH - 0.2, bW - 0.2); // Three.js坐标: X长, Y高, Z宽
+            const geoA = new THREE.BoxGeometry(bL - 0.2, bH - 0.2, bW - 0.2);
             const geoB = new THREE.BoxGeometry(bW - 0.2, bH - 0.2, bL - 0.2);
-            
             const matA = new THREE.MeshPhongMaterial({ color: 0x4A90E2, shininess: 10 });
             const matB = new THREE.MeshPhongMaterial({ color: 0x5DADE2, shininess: 10 });
             const edgeMat = new THREE.LineBasicMaterial({ color: 0x1f2937, opacity: 0.5, transparent: true });
-
             const edgeGeoA = new THREE.EdgesGeometry(geoA);
             const edgeGeoB = new THREE.EdgesGeometry(geoB);
 
-            let maxUsedX = 0; // 记录真实占用长度
-
+            let maxUsedX = 0;
             finalSlots.forEach(slot => {
-                // 判断是A区姿态还是B区姿态
                 const isA = slot.type === 'A';
-                
-                // 实例化 Mesh
                 const mesh = new THREE.Mesh(isA ? geoA : geoB, isA ? matA : matB);
-                
-                // 中心点转换 (Three.js Y轴是高度)
                 const posX = slot.x + slot.dx / 2;
                 const posY = slot.z + slot.dz / 2;
                 const posZ = slot.y + slot.dy / 2;
-                
                 mesh.position.set(posX, posY, posZ);
                 cargoGroup.add(mesh);
-
-                // 添加描边
                 const edge = new THREE.LineSegments(isA ? edgeGeoA : edgeGeoB, edgeMat);
                 edge.position.set(posX, posY, posZ);
                 cargoGroup.add(edge);
-
                 if (slot.x + slot.dx > maxUsedX) maxUsedX = slot.x + slot.dx;
             });
 
-            // 7. 更新UI数据看板
+            // 保存结果供语言切换时刷新
+            lastResult = { finalCount, maxCapacity, bestGap, maxUsedX, cL, bL, bW, bestCountW, bestCountL };
+
             document.getElementById('results-panel').classList.remove('hidden');
-            document.getElementById('res_count').innerText = finalCount + ' 箱';
-            document.getElementById('res_max').innerText = maxCapacity + ' 箱';
-            document.getElementById('res_gap').innerText = bestGap.toFixed(1) + ' cm' + (bestGap === 0 ? " (完美防晃)" : " (有缝隙)");
-            document.getElementById('res_len').innerText = maxUsedX.toFixed(1) + ' cm';
-            
-            const leftLen = cL - maxUsedX;
-            const leftEl = document.getElementById('res_left');
-            leftEl.innerText = leftLen.toFixed(1) + ' cm';
-            leftEl.className = leftLen < bL && leftLen < bW ? "font-bold text-red-500" : "font-bold text-green-600";
+            refreshResultsText();
 
-            document.getElementById('legend_A').innerText = `A区: 宽${bW} / 延${bL} (${bestCountW}列)`;
-            document.getElementById('legend_B').innerText = `B区: 宽${bL} / 延${bW} (${bestCountL}列)`;
-
-            // 8. 视角焦点跟随
             camera.position.set(maxUsedX + 400, cH + 300, cW + 400);
             controls.target.set(maxUsedX / 2, cH / 2, cW / 2);
             controls.update();
         }
 
-        // 绘制货柜辅助线
         function drawContainerBase(cL, cW, cH) {
-            // 地面网格
             const gridHelper = new THREE.GridHelper(Math.max(cL, cW), 20, 0x9ca3af, 0xd1d5db);
             gridHelper.position.set(cL/2, 0, cW/2);
             cargoGroup.add(gridHelper);
-
-            // 红色轮廓框
             const geometry = new THREE.BoxGeometry(cL, cH, cW);
             const edges = new THREE.EdgesGeometry(geometry);
             const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.4 }));
@@ -326,11 +514,10 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // 添加缺失的渲染循环函数
         function animate() {
             requestAnimationFrame(animate);
-            if (controls) controls.update(); // 更新鼠标交互控制器
-            if (renderer && scene && camera) renderer.render(scene, camera); // 渲染3D场景
+            if (controls) controls.update();
+            if (renderer && scene && camera) renderer.render(scene, camera);
         }
 
         window.onload = initScene;
