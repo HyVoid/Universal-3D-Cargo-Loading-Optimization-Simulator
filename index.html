@@ -2,312 +2,292 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>3D 装载优化模拟器</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --bg:       #F2F0E9;
-            --navy:     #051C2C;
-            --blue:     #2251FF;
-            --panel:    #FFFFFF;
-            --border:   rgba(5, 28, 44, 0.09);
-            --border-s: rgba(5, 28, 44, 0.05);
-            --muted:    rgba(5, 28, 44, 0.42);
-            --subtle:   rgba(5, 28, 44, 0.055);
-            --blue-dim: rgba(34, 81, 255, 0.08);
+            /* 严格限定的三色系基础 */
+            --bg-color:         #F5F5F5; /* 浅灰白背景 */
+            --panel-bg:         rgba(255, 255, 255, 0.85); /* 苹果风高斯模糊面板基色 */
+            --text-navy:        #051C2C; /* 深海军蓝主文本 */
+            --accent-blue:      #2251FF; /* 中蓝强调色 */
+            
+            /* 衍生辅助色（降低视觉噪音） */
+            --text-muted:       rgba(5, 28, 44, 0.55);
+            --text-light:       rgba(5, 28, 44, 0.35);
+            --border-light:     rgba(5, 28, 44, 0.08);
+            --input-bg:         rgba(5, 28, 44, 0.03);
+            --input-hover:      rgba(5, 28, 44, 0.05);
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            margin: 0;
             overflow: hidden;
-            background: var(--bg);
-            font-family: '等线', 'DengXian', 'Noto Sans SC', 'PingFang SC',
-                         -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+            background-color: var(--bg-color);
+            /* 苹果风无衬线字体栈，优先系统默认，包含等线 */
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", "等线", "DengXian", sans-serif;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            color: var(--text-navy);
         }
 
-        #canvas-container { width: 100vw; height: 100vh; display: block; }
+        #canvas-container { width: 100vw; height: 100vh; display: block; position: absolute; top: 0; left: 0; z-index: 1; }
 
-        /* ── Panel ── */
+        /* ── Panel (Apple Glassmorphism Style) ── */
         .ui-panel {
             position: absolute;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.4rem 1.5rem;
+            top: 20px;
+            left: 20px;
+            width: 340px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            padding: 28px 24px;
+            z-index: 10;
             pointer-events: auto;
-            max-height: 95vh;
+            max-height: calc(100vh - 40px);
             overflow-y: auto;
-            box-shadow: 0 2px 16px rgba(5,28,44,0.07), 0 0 0 0.5px var(--border);
+            box-shadow: 0 10px 40px -10px rgba(5, 28, 44, 0.08), 0 1px 3px rgba(5, 28, 44, 0.04);
         }
 
-        .ui-panel::-webkit-scrollbar { width: 4px; }
-        .ui-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-        .ui-panel::-webkit-scrollbar-track { background: transparent; }
+        .ui-panel::-webkit-scrollbar { width: 0px; } /* 隐藏滚动条以保持极简 */
 
-        /* ── Typography ── */
+        /* ── Typography Hierarchy ── */
         .panel-title {
-            font-size: 0.95rem;
+            font-size: 1.35rem;
             font-weight: 600;
-            letter-spacing: -0.01em;
-            color: var(--navy);
-            margin: 0 0 0.2rem;
+            letter-spacing: -0.02em;
+            color: var(--text-navy);
+            margin-bottom: 4px;
         }
         .panel-sub {
-            font-size: 0.7rem;
+            font-size: 0.8rem;
             font-weight: 400;
-            color: var(--muted);
-            letter-spacing: 0.02em;
-            margin: 0 0 1.4rem;
+            color: var(--text-muted);
+            margin-bottom: 28px;
         }
 
-        /* ── Section block ── */
-        .section-block {
-            background: var(--subtle);
-            border: 1px solid var(--border-s);
-            border-radius: 8px;
-            padding: 0.85rem 1rem;
-            margin-bottom: 0.75rem;
+        /* 去除色块，用留白和分割线代替 */
+        .section-group {
+            margin-bottom: 24px;
         }
-
         .section-label {
-            font-size: 0.65rem;
+            font-size: 0.75rem;
             font-weight: 600;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin: 0 0 0.65rem;
+            color: var(--text-navy);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-light);
+            margin-left: 12px;
         }
 
-        /* ── Input grid ── */
-        .input-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.5rem;
+        /* ── Input Layout ── */
+        .input-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
         }
-
+        .input-group {
+            flex: 1;
+        }
         .input-group label {
             display: block;
-            font-size: 0.62rem;
-            letter-spacing: 0.05em;
-            color: var(--muted);
-            margin-bottom: 0.25rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
             font-weight: 500;
         }
 
-        .input-group input {
+        /* 极简输入框 */
+        input[type="number"] {
             width: 100%;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 0.35rem 0.5rem;
-            font-size: 0.78rem;
+            background: var(--input-bg);
+            border: 1px solid transparent;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.95rem;
+            font-weight: 500;
             font-family: inherit;
-            color: var(--navy);
+            color: var(--text-navy);
             outline: none;
-            transition: border-color 0.15s;
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
             -moz-appearance: textfield;
         }
-        .input-group input::-webkit-inner-spin-button,
-        .input-group input::-webkit-outer-spin-button { -webkit-appearance: none; }
-        .input-group input:focus {
-            border-color: var(--blue);
-            box-shadow: 0 0 0 3px var(--blue-dim);
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+        
+        input[type="number"]:hover {
+            background: var(--input-hover);
+        }
+        input[type="number"]:focus {
+            background: #FFFFFF;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(34, 81, 255, 0.15);
         }
 
-        .input-group input.accent-h {
-            border-color: rgba(34,81,255,0.25);
-            background: rgba(34,81,255,0.03);
-        }
-
-        /* ── Rule note ── */
         .rule-note {
-            font-size: 0.62rem;
-            color: var(--muted);
-            line-height: 1.5;
-            margin: 0 0 0.65rem;
+            font-size: 0.7rem;
+            color: var(--text-light);
+            line-height: 1.4;
+            margin-top: -4px;
+            margin-bottom: 16px;
         }
 
-        /* ── Target input ── */
-        .target-wrap { margin-bottom: 0.85rem; }
-        .target-wrap label {
-            display: block;
-            font-size: 0.65rem;
-            font-weight: 600;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 0.35rem;
-        }
-        .target-wrap input {
-            width: 100%;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 0.4rem 0.6rem;
-            font-size: 0.8rem;
-            font-family: inherit;
-            color: var(--navy);
-            outline: none;
-            transition: border-color 0.15s;
-            -moz-appearance: textfield;
-        }
-        .target-wrap input::-webkit-inner-spin-button,
-        .target-wrap input::-webkit-outer-spin-button { -webkit-appearance: none; }
-        .target-wrap input:focus {
-            border-color: var(--blue);
-            box-shadow: 0 0 0 3px var(--blue-dim);
-        }
-        .target-hint {
-            font-size: 0.6rem;
-            color: var(--muted);
-            margin: 0.25rem 0 0;
-        }
-
-        /* ── CTA button ── */
+        /* ── CTA Button ── */
         .btn-run {
             width: 100%;
-            background: var(--blue);
-            color: #fff;
+            background: var(--accent-blue);
+            color: #FFFFFF;
             border: none;
-            border-radius: 8px;
-            padding: 0.65rem 1rem;
-            font-size: 0.8rem;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 0.95rem;
             font-weight: 600;
             letter-spacing: 0.01em;
-            font-family: inherit;
             cursor: pointer;
-            transition: opacity 0.15s, transform 0.1s;
-            outline: none;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+            box-shadow: 0 4px 12px rgba(34, 81, 255, 0.25);
         }
-        .btn-run:hover  { opacity: 0.88; }
-        .btn-run:active { transform: scale(0.98); }
+        .btn-run:hover  { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(34, 81, 255, 0.35); }
+        .btn-run:active { transform: translateY(1px) scale(0.98); box-shadow: 0 2px 8px rgba(34, 81, 255, 0.2); }
 
-        /* ── Divider ── */
-        .divider {
-            height: 1px;
-            background: var(--border);
-            margin: 1.1rem 0;
+        /* ── Results Panel (Accent focused) ── */
+        #results-panel {
+            margin-top: 28px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-light);
+        }
+        
+        .res-hero {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .res-hero-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .res-hero-val {
+            /* 核心数据使用强调色和超大字号 */
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            line-height: 1.1;
+            letter-spacing: -0.02em;
         }
 
-        /* ── Results ── */
-        .results-title {
-            font-size: 0.65rem;
-            font-weight: 600;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin: 0 0 0.75rem;
+        .res-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
-
         .res-row {
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
-            padding: 0.45rem 0;
-            border-bottom: 1px solid var(--border-s);
-        }
-        .res-row:last-child { border-bottom: none; }
-
-        .res-key {
-            font-size: 0.72rem;
-            color: var(--muted);
-        }
-        .res-val {
+            align-items: center;
             font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--navy);
-            letter-spacing: -0.01em;
         }
-        .res-val.accent   { color: var(--blue); }
-        .res-val.positive { color: #0A9960; }
-        .res-val.warning  { color: #D64B1E; }
+        .res-key { color: var(--text-muted); }
+        .res-val { color: var(--text-navy); font-weight: 600; }
+        .res-val.perfect { color: var(--text-navy); } /* 移除原有的绿色，保持三色系内 */
 
-        /* ── Legend ── */
+        /* ── Legend (Subtle) ── */
         .legend-block {
-            background: var(--subtle);
-            border: 1px solid var(--border-s);
-            border-radius: 6px;
-            padding: 0.6rem 0.75rem;
-            margin-top: 0.75rem;
+            margin-top: 20px;
             display: flex;
             flex-direction: column;
-            gap: 0.4rem;
+            gap: 8px;
+            padding: 12px;
+            background: var(--input-bg);
+            border-radius: 10px;
         }
         .legend-row {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 0.65rem;
-            color: var(--muted);
+            gap: 8px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
         }
         .legend-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 2px;
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
             flex-shrink: 0;
+            border: 1px solid rgba(5, 28, 44, 0.1);
         }
-        .dot-a { background: #2251FF; }
-        .dot-b { background: #5077FF; }
+        /* 图表辅助色：低饱和度灰色系 */
+        .dot-a { background: #D9E0E6; }
+        .dot-b { background: #E8ECEF; }
 
         /* ── Lang switcher ── */
         #lang-switcher {
             position: absolute;
-            top: 1rem;
-            right: 1rem;
+            top: 20px;
+            right: 20px;
             display: flex;
-            gap: 2px;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 3px;
-            z-index: 100;
-            box-shadow: 0 2px 8px rgba(5,28,44,0.06);
+            gap: 4px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            padding: 4px;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(5,28,44,0.05);
         }
         .lang-btn {
-            padding: 0.2rem 0.6rem;
-            border-radius: 5px;
-            font-size: 0.68rem;
-            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
             cursor: pointer;
             border: none;
-            color: var(--muted);
+            color: var(--text-muted);
             background: transparent;
-            font-family: inherit;
-            transition: all 0.15s;
-            letter-spacing: 0.03em;
+            transition: all 0.2s;
         }
-        .lang-btn:hover { color: var(--navy); background: var(--subtle); }
+        .lang-btn:hover { color: var(--text-navy); background: var(--input-bg); }
         .lang-btn.active {
-            background: var(--navy);
-            color: #fff;
+            background: #FFFFFF;
+            color: var(--text-navy);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            font-weight: 600;
         }
 
         /* ── Camera hint ── */
         #camera-hint {
             position: absolute;
-            bottom: 1.25rem;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 0.3rem 1rem;
-            font-size: 0.65rem;
-            color: var(--muted);
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 30px;
+            padding: 8px 16px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
             pointer-events: none;
-            letter-spacing: 0.03em;
-            box-shadow: 0 2px 8px rgba(5,28,44,0.06);
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(5,28,44,0.05);
+            font-weight: 500;
         }
 
-        /* ── RTL ── */
         .panel-rtl { direction: rtl; text-align: right; }
         .panel-rtl input { text-align: right; }
     </style>
@@ -322,15 +302,15 @@
     </div>
 
     <!-- Left panel -->
-    <div class="ui-panel" style="top:1rem;left:1rem;width:300px;" id="main-panel">
+    <div class="ui-panel" id="main-panel">
 
         <h1 class="panel-title" data-i18n="title">3D 装载优化模拟器</h1>
         <p class="panel-sub" data-i18n="subtitle">宽度零间隙防晃动算法</p>
 
         <!-- Container dims -->
-        <div class="section-block">
-            <p class="section-label" data-i18n="containerTitle">货柜内径尺寸 (cm)</p>
-            <div class="input-grid">
+        <div class="section-group">
+            <div class="section-label" data-i18n="containerTitle">货柜内径尺寸 (cm)</div>
+            <div class="input-row">
                 <div class="input-group">
                     <label data-i18n="labelL">长度 L</label>
                     <input type="number" id="c_l" value="1730">
@@ -347,10 +327,10 @@
         </div>
 
         <!-- Box dims -->
-        <div class="section-block">
-            <p class="section-label" data-i18n="boxTitle">单一产品尺寸 (cm)</p>
+        <div class="section-group">
+            <div class="section-label" data-i18n="boxTitle">单一产品尺寸 (cm)</div>
             <p class="rule-note" data-i18n="boxRule">高度方向固定朝上，长宽可互换以自适应货柜宽度。</p>
-            <div class="input-grid">
+            <div class="input-row">
                 <div class="input-group">
                     <label data-i18n="labelL">长度 L</label>
                     <input type="number" id="b_l" value="47.5">
@@ -361,48 +341,45 @@
                 </div>
                 <div class="input-group">
                     <label data-i18n="fixedH">高度 H ↑</label>
-                    <input type="number" id="b_h" value="34.0" class="accent-h">
+                    <input type="number" id="b_h" value="34.0">
                 </div>
             </div>
         </div>
 
         <!-- Target count -->
-        <div class="target-wrap">
-            <label data-i18n="targetLabel">目标装箱总数</label>
-            <input type="number" id="target_count" value="2751"
-                   data-i18n-placeholder="targetPlaceholder"
-                   placeholder="留空则计算物理最大容量">
-            <p class="target-hint" data-i18n="targetHint">空或 0 = 自动排满整个货柜</p>
+        <div class="section-group" style="margin-bottom: 16px;">
+            <div class="input-group">
+                <label data-i18n="targetLabel">目标装箱总数 (空值则算最大容量)</label>
+                <input type="number" id="target_count" value="2751" data-i18n-placeholder="targetPlaceholder" placeholder="留空则计算物理最大容量">
+            </div>
         </div>
 
         <button class="btn-run" onclick="runSimulation()" data-i18n="btnRun">
-            生成最优 3D 方案
+            生成最优排布方案
         </button>
 
-        <!-- Results -->
+        <!-- Results (Hidden initially) -->
         <div id="results-panel" style="display:none;">
-            <div class="divider"></div>
-            <p class="results-title" data-i18n="resultsTitle">排布计算结果</p>
+            <!-- 核心数据：只在这里使用强调色 -->
+            <div class="res-hero">
+                <div class="res-hero-label" data-i18n="resCountLabel">实际装载数量</div>
+                <div class="res-hero-val" id="res_count">—</div>
+            </div>
 
-            <div class="res-row">
-                <span class="res-key" data-i18n="resCountLabel">实际装载数量</span>
-                <span class="res-val accent" id="res_count">—</span>
-            </div>
-            <div class="res-row">
-                <span class="res-key" data-i18n="resMaxLabel">理论最大容量</span>
-                <span class="res-val" id="res_max">—</span>
-            </div>
-            <div class="res-row">
-                <span class="res-key" data-i18n="resGapLabel">货柜宽度间隙</span>
-                <span class="res-val" id="res_gap">—</span>
-            </div>
-            <div class="res-row">
-                <span class="res-key" data-i18n="resLenLabel">占用总长度</span>
-                <span class="res-val" id="res_len">—</span>
-            </div>
-            <div class="res-row">
-                <span class="res-key" data-i18n="resLeftLabel">尾部距门剩余</span>
-                <span class="res-val" id="res_left">—</span>
+            <!-- 次要数据：使用基础海军蓝和灰色 -->
+            <div class="res-list">
+                <div class="res-row">
+                    <span class="res-key" data-i18n="resMaxLabel">理论最大容量</span>
+                    <span class="res-val" id="res_max">—</span>
+                </div>
+                <div class="res-row">
+                    <span class="res-key" data-i18n="resGapLabel">宽度缝隙</span>
+                    <span class="res-val" id="res_gap">—</span>
+                </div>
+                <div class="res-row">
+                    <span class="res-key" data-i18n="resLenLabel">占用总长度</span>
+                    <span class="res-val" id="res_len">—</span>
+                </div>
             </div>
 
             <div class="legend-block">
@@ -419,13 +396,14 @@
     </div>
 
     <!-- Camera hint -->
-    <div id="camera-hint" data-i18n="cameraHint">左键旋转 · 右键平移 · 滚轮缩放</div>
+    <div id="camera-hint" data-i18n="cameraHint">拖拽旋转 · 右键平移 · 滚轮缩放</div>
 
+    <!-- 3D Canvas -->
     <div id="canvas-container"></div>
 
 <script>
 // ─────────────────────────────────────────
-// i18n
+// i18n Dictionary
 // ─────────────────────────────────────────
 const TRANSLATIONS = {
     zh: {
@@ -436,46 +414,40 @@ const TRANSLATIONS = {
         boxTitle:         "单一产品尺寸 (cm)",
         boxRule:          "高度方向固定朝上，长宽可互换以自适应货柜宽度。",
         fixedH:           "高度 H ↑",
-        targetLabel:      "目标装箱总数",
+        targetLabel:      "目标装箱总数 (空值则算最大容量)",
         targetPlaceholder:"留空则计算物理最大容量",
-        targetHint:       "空或 0 = 自动排满整个货柜",
-        btnRun:           "生成最优 3D 方案",
-        resultsTitle:     "排布计算结果",
+        btnRun:           "生成最优排布方案",
         resCountLabel:    "实际装载数量",
         resMaxLabel:      "理论最大容量",
-        resGapLabel:      "货柜宽度间隙",
+        resGapLabel:      "宽度缝隙",
         resLenLabel:      "占用总长度",
-        resLeftLabel:     "尾部距门剩余",
         unitBox: "箱", unitCm: "cm",
-        perfectGap: "（零间隙）", hasGap: "（有缝隙）",
-        legendA: "A 区：宽 {bW} / 纵深 {bL}，共 {n} 列",
-        legendB: "B 区：宽 {bL} / 纵深 {bW}，共 {n} 列",
-        cameraHint: "左键旋转 · 右键平移 · 滚轮缩放",
+        perfectGap: "零间隙", hasGap: "",
+        legendA: "A 区：宽 {bW} / 深 {bL}，共 {n} 列",
+        legendB: "B 区：宽 {bL} / 深 {bW}，共 {n} 列",
+        cameraHint: "拖拽旋转 · 右键平移 · 滚轮缩放",
         htmlLang: "zh-CN", dir: "ltr",
     },
     en: {
-        title:            "3D Load Optimization",
-        subtitle:         "Zero-Gap Anti-Shake Width Algorithm",
-        containerTitle:   "Container Inner Dimensions (cm)",
+        title:            "3D Load Optimizer",
+        subtitle:         "Zero-Gap Anti-Shake Algorithm",
+        containerTitle:   "Container Inner Dims (cm)",
         labelL: "Length L", labelW: "Width W", labelH: "Height H",
-        boxTitle:         "Single Product Dimensions (cm)",
-        boxRule:          "Height is fixed upright. Length/Width may swap to fit container width.",
+        boxTitle:         "Product Dims (cm)",
+        boxRule:          "Height is fixed upright. L/W auto-swap to fit width.",
         fixedH:           "Height H ↑",
-        targetLabel:      "Target Box Count",
+        targetLabel:      "Target Count (Blank for max)",
         targetPlaceholder:"Leave blank for max capacity",
-        targetHint:       "0 or blank = fill the entire container",
-        btnRun:           "Generate Optimal 3D Layout",
-        resultsTitle:     "Layout Results",
-        resCountLabel:    "Actual Load Count",
-        resMaxLabel:      "Theoretical Maximum",
-        resGapLabel:      "Container Width Gap",
-        resLenLabel:      "Total Length Used",
-        resLeftLabel:     "Remaining (rear to door)",
-        unitBox: "boxes", unitCm: "cm",
-        perfectGap: "(zero-gap)", hasGap: "(gap exists)",
+        btnRun:           "Generate Layout",
+        resCountLabel:    "Actual Load",
+        resMaxLabel:      "Max Capacity",
+        resGapLabel:      "Width Gap",
+        resLenLabel:      "Length Used",
+        unitBox: "box", unitCm: "cm",
+        perfectGap: "Zero-gap", hasGap: "",
         legendA: "Zone A: W{bW} / D{bL}, {n} cols",
         legendB: "Zone B: W{bL} / D{bW}, {n} cols",
-        cameraHint: "Left-drag: Rotate · Right-drag: Pan · Scroll: Zoom",
+        cameraHint: "Drag: Rotate · Right-Click: Pan · Scroll: Zoom",
         htmlLang: "en", dir: "ltr",
     },
     ar: {
@@ -486,20 +458,17 @@ const TRANSLATIONS = {
         boxTitle:         "أبعاد المنتج الواحد (سم)",
         boxRule:          "الارتفاع ثابت للأعلى. يمكن تبديل الطول/العرض لملاءمة عرض الحاوية.",
         fixedH:           "ارتفاع ثابت ↑",
-        targetLabel:      "العدد المستهدف",
+        targetLabel:      "العدد المستهدف (فارغ للحد الأقصى)",
         targetPlaceholder:"اتركه فارغاً للحد الأقصى",
-        targetHint:       "0 أو فارغ = ملء الحاوية بالكامل",
         btnRun:           "توليد المخطط الأمثل",
-        resultsTitle:     "نتائج الترتيب",
         resCountLabel:    "العدد الفعلي",
         resMaxLabel:      "الحد الأقصى النظري",
         resGapLabel:      "فجوة عرض الحاوية",
         resLenLabel:      "إجمالي الطول المستخدم",
-        resLeftLabel:     "المتبقي (من المؤخرة للباب)",
         unitBox: "صندوق", unitCm: "سم",
-        perfectGap: "(بدون فجوة)", hasGap: "(توجد فجوة)",
-        legendA: "المنطقة أ: ع{bW} / ع{bL} ({n} أعمدة)",
-        legendB: "المنطقة ب: ع{bL} / ع{bW} ({n} أعمدة)",
+        perfectGap: "بدون فجوة", hasGap: "",
+        legendA: "المنطقة أ: ع{bW} / ع{bL}، {n} أعمدة",
+        legendB: "المنطقة ب: ع{bL} / ع{bW}، {n} أعمدة",
         cameraHint: "يسار: دوران · يمين: تحريك · عجلة: تكبير",
         htmlLang: "ar", dir: "rtl",
     }
@@ -507,18 +476,17 @@ const TRANSLATIONS = {
 
 let currentLang = 'zh';
 
-function t(key) {
-    return TRANSLATIONS[currentLang][key] || TRANSLATIONS['zh'][key] || key;
-}
-
 function setLang(lang) {
     if (!TRANSLATIONS[lang]) return;
     currentLang = lang;
     const tr = TRANSLATIONS[lang];
     document.documentElement.lang = tr.htmlLang;
-    ['zh','en','ar'].forEach(l =>
-        document.getElementById('btn-'+l).classList.toggle('active', l === lang)
-    );
+    
+    ['zh','en','ar'].forEach(l => {
+        const btn = document.getElementById('btn-'+l);
+        if(btn) btn.classList.toggle('active', l === lang);
+    });
+    
     const panel = document.getElementById('main-panel');
     panel.classList.toggle('panel-rtl', tr.dir === 'rtl');
 
@@ -536,40 +504,33 @@ function setLang(lang) {
     }
 }
 
-// ─────────────────────────────────────────
-// Last result cache
-// ─────────────────────────────────────────
 let lastResult = null;
 
 function refreshResultsText() {
     if (!lastResult) return;
-    const { finalCount, maxCapacity, bestGap, maxUsedX, cL, bL, bW, bestCountW, bestCountL } = lastResult;
+    const { finalCount, maxCapacity, bestGap, maxUsedX, bL, bW, bestCountW, bestCountL } = lastResult;
     const tr = TRANSLATIONS[currentLang];
 
-    document.getElementById('res_count').textContent = finalCount + ' ' + tr.unitBox;
+    // 核心数据
+    document.getElementById('res_count').textContent = finalCount;
+    
+    // 次要数据
     document.getElementById('res_max').textContent   = maxCapacity + ' ' + tr.unitBox;
 
     const gapEl = document.getElementById('res_gap');
-    gapEl.textContent = bestGap.toFixed(1) + ' ' + tr.unitCm + '  ' +
-        (bestGap === 0 ? tr.perfectGap : tr.hasGap);
-    gapEl.className = 'res-val ' + (bestGap === 0 ? 'positive' : '');
+    gapEl.textContent = bestGap.toFixed(1) + ' ' + tr.unitCm + (bestGap === 0 ? ' ('+tr.perfectGap+')' : '');
+    gapEl.className = 'res-val ' + (bestGap === 0 ? 'perfect' : '');
 
     document.getElementById('res_len').textContent = maxUsedX.toFixed(1) + ' ' + tr.unitCm;
 
-    const leftLen = cL - maxUsedX;
-    const leftEl  = document.getElementById('res_left');
-    leftEl.textContent = leftLen.toFixed(1) + ' ' + tr.unitCm;
-    const tooShort = leftLen < bL && leftLen < bW;
-    leftEl.className = 'res-val ' + (tooShort ? 'warning' : 'positive');
-
-    document.getElementById('legend_A').textContent =
+    document.getElementById('legend_A').textContent = 
         tr.legendA.replace('{bW}',bW).replace('{bL}',bL).replace('{n}',bestCountW);
-    document.getElementById('legend_B').textContent =
+    document.getElementById('legend_B').textContent = 
         tr.legendB.replace('{bL}',bL).replace('{bW}',bW).replace('{n}',bestCountL);
 }
 
 // ─────────────────────────────────────────
-// Three.js
+// Three.js Setup
 // ─────────────────────────────────────────
 let scene, camera, renderer, controls;
 let cargoGroup = new THREE.Group();
@@ -577,27 +538,28 @@ let cargoGroup = new THREE.Group();
 function initScene() {
     const container = document.getElementById('canvas-container');
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xF2F0E9);
+    // 背景色使用极简灰白
+    scene.background = new THREE.Color(0xF5F5F5);
 
-    camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 1, 20000);
+    camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 20000);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.outputEncoding = THREE.sRGBEncoding;
     container.appendChild(renderer.domElement);
 
-    // Lighting — soft and neutral
-    scene.add(new THREE.AmbientLight(0xffffff, 0.75));
-    const d1 = new THREE.DirectionalLight(0xffffff, 0.45);
-    d1.position.set(3000, 2500, 1500); scene.add(d1);
-    const d2 = new THREE.DirectionalLight(0xCCDDFF, 0.2);
-    d2.position.set(-800, 800, -1200); scene.add(d2);
+    // 柔和的灯光设计，减少强阴影造成的视觉噪音
+    const ambient = new THREE.AmbientLight(0xffffff, 0.85);
+    scene.add(ambient);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    dirLight.position.set(2000, 3000, 1500);
+    scene.add(dirLight);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
+    controls.dampingFactor = 0.05;
     controls.minDistance   = 100;
+    controls.maxPolarAngle = Math.PI / 2 - 0.05; // 防止视线进入地下
 
     scene.add(cargoGroup);
 
@@ -607,7 +569,7 @@ function initScene() {
 }
 
 // ─────────────────────────────────────────
-// Core algorithm (unchanged logic)
+// Core Algorithm & Rendering
 // ─────────────────────────────────────────
 function runSimulation() {
     const cL = parseFloat(document.getElementById('c_l').value);
@@ -619,12 +581,16 @@ function runSimulation() {
     const raw = parseInt(document.getElementById('target_count').value);
     const targetCount = (isNaN(raw) || raw <= 0) ? Infinity : raw;
 
-    while (cargoGroup.children.length > 0)
-        cargoGroup.remove(cargoGroup.children[0]);
+    while (cargoGroup.children.length > 0) {
+        const child = cargoGroup.children[0];
+        if(child.geometry) child.geometry.dispose();
+        if(child.material) child.material.dispose();
+        cargoGroup.remove(child);
+    }
 
     drawContainerBase(cL, cW, cH);
 
-    // Zero-gap width algorithm
+    // 宽度零间隙算法
     let bestGap = cW, bestCountW = 0, bestCountL = 0;
     for (let i = 0; i <= Math.floor(cW / bW); i++) {
         const j   = Math.floor((cW - i * bW) / bL);
@@ -644,7 +610,7 @@ function runSimulation() {
                 slots.push({ x: depth*bL, y: col*bW, z: layer*bH, dx: bL, dy: bW, dz: bH, type: 'A' });
 
     // Zone B
-    const maxDepthB   = Math.floor(cL / bW);
+    const maxDepthB    = Math.floor(cL / bW);
     const widthOffsetB = bestCountW * bW;
     for (let layer = 0; layer < maxLayers; layer++)
         for (let depth = 0; depth < maxDepthB; depth++)
@@ -661,49 +627,61 @@ function runSimulation() {
     const finalCount  = Math.min(targetCount, maxCapacity);
     const finalSlots  = slots.slice(0, finalCount);
 
-    // Materials — navy-blue palette, low noise
-    const geoA = new THREE.BoxGeometry(bL - 0.3, bH - 0.3, bW - 0.3);
-    const geoB = new THREE.BoxGeometry(bW - 0.3, bH - 0.3, bL - 0.3);
-    const matA = new THREE.MeshPhongMaterial({ color: 0x2251FF, shininess: 18, specular: 0x8899FF });
-    const matB = new THREE.MeshPhongMaterial({ color: 0x4D72FF, shininess: 18, specular: 0x8899FF });
-    const edgeMat = new THREE.LineBasicMaterial({ color: 0x051C2C, opacity: 0.18, transparent: true });
+    // 【关键视觉修改】图表主体采用低饱和度灰色系，边缘线使用极淡的海军蓝
+    const geoA = new THREE.BoxGeometry(bL - 0.5, bH - 0.5, bW - 0.5);
+    const geoB = new THREE.BoxGeometry(bW - 0.5, bH - 0.5, bL - 0.5);
+    
+    // A区：略深的冷灰色
+    const matA = new THREE.MeshPhongMaterial({ color: 0xD9E0E6, shininess: 5, flatShading: true });
+    // B区：略浅的冷灰白
+    const matB = new THREE.MeshPhongMaterial({ color: 0xE8ECEF, shininess: 5, flatShading: true });
+    
+    // 边框线：深海军蓝降低透明度
+    const edgeMat = new THREE.LineBasicMaterial({ color: 0x051C2C, opacity: 0.12, transparent: true });
     const eGeoA = new THREE.EdgesGeometry(geoA);
     const eGeoB = new THREE.EdgesGeometry(geoB);
 
     let maxUsedX = 0;
+    
+    // 使用 InstancedMesh 或合并 Geometry 可以提升性能，这里为保持逻辑清晰仍用遍历，但由于去除了复杂的反光，性能较好
     finalSlots.forEach(s => {
         const isA = s.type === 'A';
         const mesh = new THREE.Mesh(isA ? geoA : geoB, isA ? matA : matB);
         const px = s.x + s.dx/2, py = s.z + s.dz/2, pz = s.y + s.dy/2;
         mesh.position.set(px, py, pz);
         cargoGroup.add(mesh);
+        
         const edge = new THREE.LineSegments(isA ? eGeoA : eGeoB, edgeMat);
         edge.position.set(px, py, pz);
         cargoGroup.add(edge);
+        
         if (s.x + s.dx > maxUsedX) maxUsedX = s.x + s.dx;
     });
 
     lastResult = { finalCount, maxCapacity, bestGap, maxUsedX, cL, bL, bW, bestCountW, bestCountL };
 
-    document.getElementById('results-panel').style.display = '';
+    document.getElementById('results-panel').style.display = 'block';
     refreshResultsText();
 
-    camera.position.set(maxUsedX + 380, cH + 260, cW + 380);
-    controls.target.set(maxUsedX/2, cH/2, cW/2);
+    // 调整相机视角，居中显示货柜
+    camera.position.set(cL * 0.8, cH * 2, cW * 2.5);
+    controls.target.set(cL/2, cH/2, cW/2);
     controls.update();
 }
 
 function drawContainerBase(cL, cW, cH) {
-    // Subtle floor grid
-    const grid = new THREE.GridHelper(Math.max(cL, cW) * 1.05, 24, 0xC8C6BF, 0xDCDAD3);
+    // 极简的地板网格，低对比度
+    const grid = new THREE.GridHelper(Math.max(cL, cW) * 1.2, 20, 0x051C2C, 0x051C2C);
+    grid.material.opacity = 0.04;
+    grid.material.transparent = true;
     grid.position.set(cL/2, 0, cW/2);
     cargoGroup.add(grid);
 
-    // Container wireframe — navy, low opacity
+    // 货柜轮廓线 - 极细的海军蓝线条
     const geo  = new THREE.BoxGeometry(cL, cH, cW);
     const edge = new THREE.EdgesGeometry(geo);
-    const line = new THREE.LineSegments(edge,
-        new THREE.LineBasicMaterial({ color: 0x051C2C, opacity: 0.22, transparent: true }));
+    const line = new THREE.LineSegments(edge, 
+        new THREE.LineBasicMaterial({ color: 0x051C2C, opacity: 0.15, transparent: true }));
     line.position.set(cL/2, cH/2, cW/2);
     cargoGroup.add(line);
 }
@@ -716,8 +694,8 @@ function onWindowResize() {
 
 function animate() {
     requestAnimationFrame(animate);
-    if (controls) controls.update();
-    if (renderer && scene && camera) renderer.render(scene, camera);
+    controls.update();
+    renderer.render(scene, camera);
 }
 
 window.onload = initScene;
