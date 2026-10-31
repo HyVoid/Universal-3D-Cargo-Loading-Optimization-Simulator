@@ -95,6 +95,15 @@ Click the blue **「Generate Optimal 3D Plan」** button. The system runs the ca
 
 ---
 
+## Other Tools in This Series
+
+* **[MULTI-NODE-INVENTORY-RECONCILIATION](https://github.com/HyVoid/MULTI-NODE-INVENTORY-RECONCILIATION)** — Why do locations disagree on inventory positions? — Reconcile inventory records across multiple operating nodes to identify discrepancies.
+* **[inventory-planning-reorder-point-excel](https://github.com/HyVoid/inventory-planning-reorder-point-excel)** — What purchasing decision should be made today given demand trends lead times and cash constraints? — Forecast inventory requirements by combining demand signals lead-time risk purchasing recommendations and working capital exposure.
+* **[Retail-SKU-Concentration-Assortment-Diagnostic-Console](https://github.com/HyVoid/Retail-SKU-Concentration-Assortment-Diagnostic-Console)** — Which products dominate inventory risk or dilute assortment quality? — Identify SKU concentration risk and assortment efficiency across retail product catalogs.
+* **[Retail-and-Maquila-Inventory-Ledger](https://github.com/HyVoid/Retail-and-Maquila-Inventory-Ledger)** — Where is inventory moving across retail and maquila operations? — Track inventory movement processing loss and stock exposure across factories warehouses and stores.
+* **[Cross-Border-DTC-Inventory-Governance-Console](https://github.com/HyVoid/Cross-Border-DTC-Inventory-Governance-Console)** — What is the real purchasing demand after removing pre-order liabilities and expected returns? — Reconstruct true demand signals by isolating pre-order obligations and return behavior from raw sales data.
+* **[inventory-allocation-fulfillment-excel](https://github.com/HyVoid/inventory-allocation-fulfillment-excel)** — Can each customer order actually be delivered on time given physical stock, reservations, in-transit containers, and open POs across all our locations? — Calculate available-to-promise quantities and net procurement requirements by reconciling physical stock, order reservations, in-transit inventory, and open purchase orders across multiple locations.
+
 ## 🔬 About The Method
 
 This simulator uses a **deterministic exhaustive algorithm** — not heuristic search or AI generation. Identical inputs always produce identical outputs; the process is fully reproducible.
